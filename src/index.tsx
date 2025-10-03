@@ -729,17 +729,22 @@ app.get('/', (c) => {
             <!-- Board View -->
             <div id="boardView" class="hidden">
                 <div class="board-bg min-h-screen">
-                    <div class="px-4 py-4">
-                        <div class="flex items-center justify-between mb-6 text-white">
-                            <h2 id="boardTitle" class="text-2xl font-bold"></h2>
-                            <div class="flex space-x-2">
-                                <button id="addListBtn" class="bg-white/20 backdrop-blur px-4 py-2 rounded hover:bg-white/30">
-                                    <i class="fas fa-plus mr-2"></i>Liste hinzufügen
+                    <div class="py-4">
+                        <div class="flex items-center justify-between mb-4 px-4 text-white">
+                            <div class="flex items-center gap-3">
+                                <button onclick="app.showWorkspaceView()" class="text-white/80 hover:text-white">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <h2 id="boardTitle" class="text-xl font-semibold"></h2>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="addListBtn" class="bg-white/10 backdrop-blur px-3 py-1.5 rounded text-sm hover:bg-white/20 transition">
+                                    <i class="fas fa-plus mr-1.5 text-xs"></i>Liste hinzufügen
                                 </button>
                             </div>
                         </div>
                         
-                        <div id="listsContainer" class="flex space-x-4 overflow-x-auto pb-4">
+                        <div id="listsContainer" class="flex gap-3 overflow-x-auto pb-4 px-4">
                             <!-- Lists will be dynamically added here -->
                         </div>
                     </div>

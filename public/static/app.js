@@ -209,23 +209,24 @@ class TaskBoardApp {
 
         workspaces.forEach(workspace => {
             const card = document.createElement('div');
-            card.className = 'bg-white rounded-lg shadow hover:shadow-lg transition cursor-pointer p-6';
+            card.className = 'bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer p-5 border border-gray-100';
             card.onclick = () => this.loadWorkspaceBoards(workspace.id);
             
             card.innerHTML = `
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
-                        <i class="fas fa-briefcase text-indigo-600 text-xl"></i>
+                <div class="flex items-center mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-briefcase text-white text-sm"></i>
                     </div>
-                    <div>
-                        <h3 class="font-semibold text-lg">${workspace.name}</h3>
-                        <p class="text-sm text-gray-500">${workspace.description || 'Kein Beschreibung'}</p>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-base text-gray-800">${workspace.name}</h3>
+                        <p class="text-xs text-gray-500">${workspace.description || 'Keine Beschreibung'}</p>
                     </div>
                 </div>
-                <div class="flex justify-between items-center text-sm text-gray-500">
-                    <span><i class="fas fa-calendar-alt mr-1"></i>${new Date(workspace.created_at).toLocaleDateString('de-DE')}</span>
-                    <button onclick="event.stopPropagation(); app.viewWorkspaceBoards('${workspace.id}')" class="text-indigo-600 hover:text-indigo-800">
-                        <i class="fas fa-arrow-right"></i>
+                <div class="flex justify-between items-center text-xs text-gray-400">
+                    <span><i class="far fa-calendar mr-1"></i>${new Date(workspace.created_at).toLocaleDateString('de-DE')}</span>
+                    <button onclick="event.stopPropagation(); app.viewWorkspaceBoards('${workspace.id}')" 
+                            class="text-indigo-600 hover:text-indigo-700 font-medium">
+                        Öffnen <i class="fas fa-chevron-right ml-1 text-xs"></i>
                     </button>
                 </div>
             `;
@@ -301,18 +302,23 @@ class TaskBoardApp {
 
         boards.forEach(board => {
             const card = document.createElement('div');
-            card.className = 'bg-white rounded-lg shadow hover:shadow-lg transition cursor-pointer overflow-hidden';
+            card.className = 'bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-100';
             card.onclick = () => this.showBoardView(board.id);
             
             card.innerHTML = `
-                <div class="h-32" style="background: ${board.background_color || '#0079BF'}"></div>
+                <div class="h-24 relative" style="background: linear-gradient(135deg, ${board.background_color || '#0079BF'}, ${board.background_color || '#0079BF'}dd)">
+                    <div class="absolute inset-0 bg-black/10"></div>
+                </div>
                 <div class="p-4">
-                    <h3 class="font-semibold text-lg mb-2">${board.name}</h3>
-                    <p class="text-sm text-gray-500 mb-3">${board.description || 'Keine Beschreibung'}</p>
-                    <div class="flex justify-between items-center text-sm text-gray-500">
-                        <span><i class="fas fa-calendar-alt mr-1"></i>${new Date(board.created_at).toLocaleDateString('de-DE')}</span>
-                        <button onclick="event.stopPropagation(); app.showBoardView('${board.id}')" class="text-indigo-600 hover:text-indigo-800">
-                            Öffnen <i class="fas fa-arrow-right ml-1"></i>
+                    <h3 class="font-semibold text-base text-gray-800 mb-1">${board.name}</h3>
+                    <p class="text-xs text-gray-500 mb-3 line-clamp-2">${board.description || 'Keine Beschreibung'}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-400">
+                            <i class="far fa-calendar mr-1"></i>${new Date(board.created_at).toLocaleDateString('de-DE')}
+                        </span>
+                        <button onclick="event.stopPropagation(); app.showBoardView('${board.id}')" 
+                                class="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+                            Öffnen <i class="fas fa-chevron-right ml-0.5" style="font-size: 10px;"></i>
                         </button>
                     </div>
                 </div>
@@ -383,17 +389,17 @@ class TaskBoardApp {
 
     createListElement(list) {
         const listDiv = document.createElement('div');
-        listDiv.className = 'list-column bg-gray-100 rounded-lg p-4 w-80 flex-shrink-0';
+        listDiv.className = 'list-column bg-white/90 backdrop-blur rounded-lg p-3 w-72 flex-shrink-0 shadow-sm';
         listDiv.dataset.listId = list.id;
         
         listDiv.innerHTML = `
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold text-gray-800">${list.name}</h3>
-                <button onclick="app.addCard('${list.id}')" class="text-gray-500 hover:text-gray-700 transition">
-                    <i class="fas fa-plus"></i>
+            <div class="flex justify-between items-center mb-3 px-2">
+                <h3 class="font-semibold text-gray-700 text-sm">${list.name}</h3>
+                <button onclick="app.addCard('${list.id}')" class="text-gray-400 hover:text-gray-600 transition p-1">
+                    <i class="fas fa-plus text-xs"></i>
                 </button>
             </div>
-            <div class="cards-container space-y-2" data-list-id="${list.id}" style="min-height: 60px;">
+            <div class="cards-container space-y-2 px-1" data-list-id="${list.id}" style="min-height: 40px;">
                 ${list.cards ? list.cards.map((card, index) => {
                     // Add position data to each card
                     card.position = index;
@@ -429,30 +435,37 @@ class TaskBoardApp {
     createCardHTML(card) {
         const dueDate = card.due_date ? new Date(card.due_date).toLocaleDateString('de-DE') : '';
         const labels = card.labels ? card.labels.map(l => 
-            `<span class="inline-block px-2 py-1 text-xs rounded" style="background: ${l.color}; color: white;">${l.name}</span>`
+            `<span class="inline-block px-1.5 py-0.5 text-xs rounded-sm font-medium" style="background: ${l.color}; color: white;">${l.name}</span>`
         ).join(' ') : '';
         
         const members = card.members ? card.members.map(m => 
-            `<div class="w-6 h-6 bg-indigo-600 rounded-full text-white text-xs flex items-center justify-center" title="${m.name}">
+            `<div class="w-5 h-5 bg-indigo-500 rounded-full text-white text-xs flex items-center justify-center ring-2 ring-white" title="${m.name}">
                 ${m.name.charAt(0).toUpperCase()}
             </div>`
         ).join('') : '';
 
+        // Determine if we need to show badges
+        const hasExtras = dueDate || card.comments_count > 0 || card.attachments_count > 0 || members;
+
         return `
-            <div class="card-item bg-white p-3 rounded shadow card-shadow cursor-move hover:shadow-md transition" 
+            <div class="card-item bg-white rounded-md shadow-sm hover:shadow-md transition-all duration-200 cursor-move border border-gray-100" 
                  draggable="true" 
                  data-card-id="${card.id}"
                  data-list-id="${card.list_id}">
-                ${labels ? `<div class="mb-2">${labels}</div>` : ''}
-                <h4 class="text-sm font-medium mb-2">${card.title}</h4>
-                ${card.description ? `<p class="text-xs text-gray-600 mb-2">${card.description}</p>` : ''}
-                <div class="flex justify-between items-center text-xs text-gray-500">
-                    <div class="flex items-center space-x-2">
-                        ${dueDate ? `<span><i class="far fa-calendar"></i> ${dueDate}</span>` : ''}
-                        ${card.comments_count > 0 ? `<span><i class="far fa-comment"></i> ${card.comments_count}</span>` : ''}
-                        ${card.attachments_count > 0 ? `<span><i class="fas fa-paperclip"></i> ${card.attachments_count}</span>` : ''}
+                <div class="p-2.5">
+                    ${labels ? `<div class="flex flex-wrap gap-1 mb-2">${labels}</div>` : ''}
+                    <h4 class="text-sm text-gray-800 font-normal leading-snug">${card.title}</h4>
+                    ${card.description ? `<p class="text-xs text-gray-500 mt-1 line-clamp-2">${card.description}</p>` : ''}
+                    ${hasExtras ? `
+                    <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
+                        <div class="flex items-center gap-3 text-xs text-gray-400">
+                            ${dueDate ? `<span class="flex items-center gap-1"><i class="far fa-clock text-xs"></i> ${dueDate}</span>` : ''}
+                            ${card.comments_count > 0 ? `<span class="flex items-center gap-1"><i class="far fa-comment"></i> ${card.comments_count}</span>` : ''}
+                            ${card.attachments_count > 0 ? `<span class="flex items-center gap-1"><i class="fas fa-paperclip"></i> ${card.attachments_count}</span>` : ''}
+                        </div>
+                        ${members ? `<div class="flex -space-x-1.5">${members}</div>` : ''}
                     </div>
-                    ${members ? `<div class="flex -space-x-2">${members}</div>` : ''}
+                    ` : ''}
                 </div>
             </div>
         `;
