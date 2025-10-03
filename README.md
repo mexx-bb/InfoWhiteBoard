@@ -10,6 +10,25 @@
 - **Admin Dashboard**: https://3000-i9526dszlekai3x5kjasl-6532622b.e2b.dev/admin
 - **API Endpoints**: https://3000-i9526dszlekai3x5kjasl-6532622b.e2b.dev/api/*
 
+## 📱 Mobile Support (NEU!)
+
+### Vollständige Mobile-Optimierung
+- ✅ **Responsive Design** - Optimiert für alle Bildschirmgrößen (320px - 4K)
+- ✅ **Touch-Support** - Native Touch-Gesten für Drag & Drop
+- ✅ **PWA-Ready** - Installierbar als App auf dem Homescreen
+- ✅ **Mobile Navigation** - Burger-Menu und FAB-Buttons
+- ✅ **Horizontales Scrolling** - Smooth scrolling für Board-Listen
+- ✅ **Touch-optimierte Karten** - Long-Press für Drag & Drop
+- ✅ **Haptic Feedback** - Vibration bei Interaktionen
+- ✅ **Landscape Mode** - Optimiert für Querformat
+- ✅ **Safe Areas** - Unterstützung für iPhone Notch/Dynamic Island
+
+### Mobile-spezifische Features
+- **Swipe-Gesten** für Listen-Navigation
+- **Pull-to-Refresh** (coming soon)
+- **Offline-Support** (coming soon)
+- **Push Notifications** (coming soon)
+
 ## ✅ Aktuell implementierte Features
 
 ### 🔐 Authentifizierung & Autorisierung
