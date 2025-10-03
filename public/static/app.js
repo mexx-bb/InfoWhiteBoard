@@ -6,6 +6,13 @@ class TaskBoardApp {
         this.currentBoard = null;
         this.currentWorkspace = null;
         this.draggedCard = null;
+        
+        // Bind drag methods to preserve context
+        this.handleDragStart = this.handleDragStart.bind(this);
+        this.handleDragEnd = this.handleDragEnd.bind(this);
+        this.handleDragOver = this.handleDragOver.bind(this);
+        this.handleDrop = this.handleDrop.bind(this);
+        
         this.init();
     }
 
@@ -376,24 +383,45 @@ class TaskBoardApp {
 
     createListElement(list) {
         const listDiv = document.createElement('div');
-        listDiv.className = 'bg-gray-100 rounded-lg p-4 w-80 flex-shrink-0';
+        listDiv.className = 'list-column bg-gray-100 rounded-lg p-4 w-80 flex-shrink-0';
         listDiv.dataset.listId = list.id;
         
         listDiv.innerHTML = `
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-semibold text-gray-800">${list.name}</h3>
-                <button onclick="app.addCard('${list.id}')" class="text-gray-500 hover:text-gray-700">
+                <button onclick="app.addCard('${list.id}')" class="text-gray-500 hover:text-gray-700 transition">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
-            <div class="cards-container space-y-2" data-list-id="${list.id}">
-                ${list.cards ? list.cards.map(card => this.createCardHTML(card)).join('') : ''}
+            <div class="cards-container space-y-2" data-list-id="${list.id}" style="min-height: 60px;">
+                ${list.cards ? list.cards.map((card, index) => {
+                    // Add position data to each card
+                    card.position = index;
+                    return this.createCardHTML(card);
+                }).join('') : ''}
             </div>
         `;
 
         // Setup drag and drop for the list
         const cardsContainer = listDiv.querySelector('.cards-container');
         this.setupDropZone(cardsContainer);
+        
+        // Add visual feedback for drag over
+        cardsContainer.addEventListener('dragenter', (e) => {
+            if (e.dataTransfer.types.includes('text/html')) {
+                listDiv.classList.add('active-drop');
+            }
+        });
+        
+        cardsContainer.addEventListener('dragleave', (e) => {
+            if (!cardsContainer.contains(e.relatedTarget)) {
+                listDiv.classList.remove('active-drop');
+            }
+        });
+        
+        cardsContainer.addEventListener('drop', () => {
+            listDiv.classList.remove('active-drop');
+        });
 
         return listDiv;
     }
@@ -411,10 +439,10 @@ class TaskBoardApp {
         ).join('') : '';
 
         return `
-            <div class="card-item bg-white p-3 rounded shadow card-shadow cursor-pointer hover:shadow-md transition" 
+            <div class="card-item bg-white p-3 rounded shadow card-shadow cursor-move hover:shadow-md transition" 
                  draggable="true" 
                  data-card-id="${card.id}"
-                 onclick="app.showCardDetails('${card.id}')">
+                 data-list-id="${card.list_id}">
                 ${labels ? `<div class="mb-2">${labels}</div>` : ''}
                 <h4 class="text-sm font-medium mb-2">${card.title}</h4>
                 ${card.description ? `<p class="text-xs text-gray-600 mb-2">${card.description}</p>` : ''}
@@ -431,43 +459,131 @@ class TaskBoardApp {
     }
 
     setupDropZone(container) {
+        // Make container a drop zone
         container.addEventListener('dragover', (e) => {
             e.preventDefault();
-            container.classList.add('drag-over');
-        });
-
-        container.addEventListener('dragleave', () => {
-            container.classList.remove('drag-over');
-        });
-
-        container.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            container.classList.remove('drag-over');
-            
-            if (this.draggedCard) {
-                const listId = container.dataset.listId;
-                const cardId = this.draggedCard.dataset.cardId;
-                
-                // Move card to new list
-                await this.moveCard(cardId, listId);
-                
-                // Update UI
-                container.appendChild(this.draggedCard);
-                this.draggedCard = null;
+            const afterElement = this.getDragAfterElement(container, e.clientY);
+            const dragging = document.querySelector('.dragging');
+            if (dragging) {
+                if (afterElement == null) {
+                    container.appendChild(dragging);
+                } else {
+                    container.insertBefore(dragging, afterElement);
+                }
             }
         });
 
-        // Setup dragging for cards
-        container.querySelectorAll('.card-item').forEach(card => {
-            card.addEventListener('dragstart', (e) => {
-                this.draggedCard = card;
-                card.classList.add('dragging');
-            });
+        // Setup dragging for all cards in this container
+        this.setupCardDragging(container);
+    }
 
-            card.addEventListener('dragend', () => {
-                card.classList.remove('dragging');
-            });
+    setupCardDragging(container) {
+        container.querySelectorAll('.card-item').forEach(card => {
+            // Remove old listeners to prevent duplicates
+            card.removeEventListener('dragstart', this.handleDragStart);
+            card.removeEventListener('dragend', this.handleDragEnd);
+            card.removeEventListener('click', this.handleCardClick);
+            
+            // Add new listeners
+            card.addEventListener('dragstart', this.handleDragStart.bind(this));
+            card.addEventListener('dragend', this.handleDragEnd.bind(this));
+            card.addEventListener('click', this.handleCardClick.bind(this));
         });
+    }
+
+    handleDragStart(e) {
+        const card = e.currentTarget;
+        card.classList.add('dragging');
+        this.draggedCard = card;
+        this.draggedCardOriginalList = card.parentElement;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', card.dataset.cardId);
+        
+        // Create a better drag image
+        const dragImage = card.cloneNode(true);
+        dragImage.style.opacity = '0.8';
+        dragImage.style.transform = 'rotate(5deg)';
+        document.body.appendChild(dragImage);
+        e.dataTransfer.setDragImage(dragImage, e.offsetX, e.offsetY);
+        setTimeout(() => document.body.removeChild(dragImage), 0);
+    }
+
+    handleDragEnd(e) {
+        const card = e.currentTarget;
+        card.classList.remove('dragging');
+        
+        // Clean up any visual states
+        document.querySelectorAll('.cards-container').forEach(container => {
+            container.classList.remove('drag-over');
+        });
+        
+        document.querySelectorAll('.list-column').forEach(column => {
+            column.classList.remove('active-drop');
+        });
+        
+        // Get the new list and position
+        const newList = card.parentElement;
+        if (!newList || !newList.classList.contains('cards-container')) {
+            // Card was not dropped in a valid location, return to original position
+            if (this.draggedCardOriginalList) {
+                this.draggedCardOriginalList.appendChild(card);
+            }
+            this.draggedCard = null;
+            return;
+        }
+        
+        const newListId = newList.dataset.listId;
+        const cardId = card.dataset.cardId;
+        const oldListId = card.dataset.listId;
+        
+        // Calculate position based on siblings
+        const cards = Array.from(newList.querySelectorAll('.card-item'));
+        const position = cards.indexOf(card);
+        
+        // Only update if the card was actually moved
+        if (newListId && (newListId !== oldListId || position !== parseInt(card.dataset.position))) {
+            this.moveCard(cardId, newListId, position);
+            card.dataset.listId = newListId;
+            card.dataset.position = position;
+        }
+        
+        this.draggedCard = null;
+        this.draggedCardOriginalList = null;
+    }
+    
+    handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+    
+    handleDrop(e) {
+        e.preventDefault();
+        const container = e.currentTarget;
+        container.classList.remove('drag-over');
+        container.parentElement.classList.remove('active-drop');
+    }
+
+    handleCardClick(e) {
+        // Prevent click event when dragging
+        if (!e.currentTarget.classList.contains('dragging')) {
+            const cardId = e.currentTarget.dataset.cardId;
+            this.showCardDetails(cardId);
+        }
+    }
+
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.card-item:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     async addList() {
@@ -513,18 +629,23 @@ class TaskBoardApp {
         }
     }
 
-    async moveCard(cardId, listId) {
-        const container = document.querySelector(`[data-list-id="${listId}"]`);
-        const position = container.children.length;
-
+    async moveCard(cardId, listId, position = 0) {
         try {
-            await fetch(`/api/cards/${cardId}/move`, {
+            const response = await fetch(`/api/cards/${cardId}/move`, {
                 method: 'PUT',
                 headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ list_id: listId, position })
             });
+            
+            if (!response.ok) {
+                console.error('Failed to move card');
+                // Reload board to reset positions if move failed
+                await this.loadBoard(this.currentBoard.id);
+            }
         } catch (error) {
             console.error('Error moving card:', error);
+            // Reload board to reset positions on error
+            await this.loadBoard(this.currentBoard.id);
         }
     }
 

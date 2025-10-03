@@ -572,11 +572,66 @@ app.get('/', (c) => {
     <title>TaskBoard - Team Collaboration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
     <style>
-        .drag-over { background-color: #f3f4f6; }
-        .dragging { opacity: 0.5; }
-        .card-shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
-        .board-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .drag-over { 
+            background-color: #e5e7eb;
+            border: 2px dashed #9ca3af;
+        }
+        .dragging { 
+            opacity: 0.5;
+            cursor: grabbing !important;
+            transform: rotate(2deg);
+        }
+        .card-item {
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+        .card-item:active {
+            cursor: grabbing;
+        }
+        .card-shadow { 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12); 
+        }
+        .board-bg { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        }
+        .cards-container {
+            min-height: 100px;
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .cards-container:empty::after {
+            content: 'Keine Karten';
+            display: block;
+            text-align: center;
+            padding: 20px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        /* Smooth transitions for card movements */
+        .card-item {
+            animation: slideIn 0.2s ease;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* Visual feedback for drop zones */
+        .list-column {
+            transition: all 0.2s ease;
+        }
+        .list-column.active-drop {
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body class="bg-gray-50">

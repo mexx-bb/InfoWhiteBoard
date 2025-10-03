@@ -1,1 +1,179 @@
-h1 { font-family: Arial, Helvetica, sans-serif; }
+/* TaskBoard Custom Styles */
+
+/* Drag and Drop Styles */
+.dragging {
+    opacity: 0.4 !important;
+    cursor: grabbing !important;
+    transform: rotate(2deg) scale(1.05);
+    z-index: 1000;
+}
+
+.card-item {
+    cursor: grab;
+    user-select: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.card-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.card-item:active {
+    cursor: grabbing;
+}
+
+/* Drop Zone Indicators */
+.cards-container {
+    min-height: 80px;
+    padding: 8px 4px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.cards-container.drag-over {
+    background-color: rgba(99, 102, 241, 0.1);
+    border: 2px dashed #6366f1;
+    padding: 12px 8px;
+}
+
+.cards-container:empty::after {
+    content: 'Ziehe Karten hierher';
+    display: block;
+    text-align: center;
+    padding: 24px;
+    color: #9ca3af;
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* Card Drop Preview */
+.drop-preview {
+    height: 80px;
+    margin: 4px 0;
+    background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 100%);
+    border: 2px dashed #9ca3af;
+    border-radius: 6px;
+    opacity: 0.5;
+}
+
+/* List Column Active State */
+.list-column {
+    transition: all 0.2s ease;
+}
+
+.list-column.active-drop {
+    background-color: #f3f4f6;
+    transform: scale(1.02);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth Card Animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-item-enter {
+    animation: slideIn 0.3s ease forwards;
+}
+
+/* Ghost Image while dragging */
+.card-ghost {
+    opacity: 0.3;
+    background: #e5e7eb;
+    border: 2px dashed #9ca3af;
+}
+
+/* Board Scrolling */
+#listsContainer {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+#listsContainer::-webkit-scrollbar {
+    height: 8px;
+}
+
+#listsContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#listsContainer::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 4px;
+}
+
+#listsContainer::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+}
+
+/* Card Labels */
+.card-label {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 3px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+
+/* Member Avatars */
+.member-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: 2px solid white;
+    margin-left: -8px;
+    transition: all 0.2s ease;
+}
+
+.member-avatar:first-child {
+    margin-left: 0;
+}
+
+.member-avatar:hover {
+    transform: scale(1.1);
+    z-index: 10;
+}
+
+/* Loading States */
+.loading-shimmer {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .list-column {
+        width: 90vw !important;
+    }
+    
+    #listsContainer {
+        padding: 0 10px;
+    }
+}
