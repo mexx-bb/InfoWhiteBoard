@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "taskboard",
+  "compatibility_date": "2024-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "./dist",
+  
+  // D1 Database configuration
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "taskboard-db",
+      "database_id": "YOUR_DATABASE_ID" // Will be replaced after creation
+    }
+  ],
+  
+  // KV Namespace for caching
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "YOUR_KV_ID", // Will be replaced after creation
+      "preview_id": "YOUR_KV_PREVIEW_ID"
+    }
+  ],
+  
+  // Environment variables (use wrangler secret put for sensitive data)
+  "vars": {
+    "JWT_SECRET": "development-secret-change-in-production",
+    "SESSION_DURATION": "86400", // 24 hours in seconds
+    "MAX_LOGIN_ATTEMPTS": "5",
+    "LOCKOUT_DURATION": "900" // 15 minutes in seconds
+  }
+}
