@@ -1,14 +1,16 @@
 -- Insert default admin user (password: admin123)
+-- SHA256 hash of "admin123": 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
 INSERT OR IGNORE INTO users (id, email, password_hash, name, role) VALUES 
-  ('admin-user-001', 'admin@taskboard.com', '$2a$10$YourHashedPasswordHere', 'Admin User', 'admin');
+  ('admin-user-001', 'admin@taskboard.com', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'Admin User', 'admin');
 
 -- Insert test users (password for all: test123)
+-- SHA256 hash of "test123": ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae
 INSERT OR IGNORE INTO users (id, email, password_hash, name, role) VALUES 
-  ('user-001', 'max.mueller@company.de', '$2a$10$YourHashedPasswordHere', 'Max Müller', 'member'),
-  ('user-002', 'anna.schmidt@company.de', '$2a$10$YourHashedPasswordHere', 'Anna Schmidt', 'member'),
-  ('user-003', 'thomas.weber@company.de', '$2a$10$YourHashedPasswordHere', 'Thomas Weber', 'observer'),
-  ('user-004', 'sarah.klein@company.de', '$2a$10$YourHashedPasswordHere', 'Sarah Klein', 'member'),
-  ('user-005', 'michael.braun@company.de', '$2a$10$YourHashedPasswordHere', 'Michael Braun', 'admin');
+  ('user-001', 'max.mueller@company.de', 'ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae', 'Max Müller', 'member'),
+  ('user-002', 'anna.schmidt@company.de', 'ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae', 'Anna Schmidt', 'member'),
+  ('user-003', 'thomas.weber@company.de', 'ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae', 'Thomas Weber', 'observer'),
+  ('user-004', 'sarah.klein@company.de', 'ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae', 'Sarah Klein', 'member'),
+  ('user-005', 'michael.braun@company.de', 'ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae', 'Michael Braun', 'admin');
 
 -- Insert test workspace
 INSERT OR IGNORE INTO workspaces (id, name, description, owner_id) VALUES 

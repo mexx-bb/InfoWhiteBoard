@@ -28,76 +28,115 @@ app.use('/static/*', serveStatic({ root: './public' }));
 
 // Register
 app.post('/api/auth/register', async (c) => {
-  const { email, password, name } = await c.req.json();
-  const db = c.env.DB;
-  
-  // Check if user exists
-  const existing = await db.prepare(
-    'SELECT id FROM users WHERE email = ?'
-  ).bind(email).first();
-  
-  if (existing) {
-    return c.json({ error: 'Email already registered' }, 400);
+  try {
+    const { email, password, name } = await c.req.json();
+    const db = c.env.DB;
+    
+    if (!email || !password || !name) {
+      return c.json({ error: 'Email, password and name are required' }, 400);
+    }
+    
+    // Check if user exists
+    const existing = await db.prepare(
+      'SELECT id FROM users WHERE email = ?'
+    ).bind(email).first();
+    
+    if (existing) {
+      return c.json({ error: 'Email already registered' }, 400);
+    }
+    
+    // Hash password
+    const passwordHash = await Password.hash(password);
+    const userId = nanoid();
+    
+    // Create user
+    await db.prepare(`
+      INSERT INTO users (id, email, password_hash, name, role)
+      VALUES (?, ?, ?, ?, 'member')
+    `).bind(userId, email, passwordHash, name).run();
+    
+    // Get created user (without password)
+    const userRecord = await db.prepare(`
+      SELECT id, email, name, role, avatar_url, is_active, created_at, updated_at 
+      FROM users WHERE id = ?
+    `).bind(userId).first();
+    
+    const user: User = {
+      id: userRecord?.id as string,
+      email: userRecord?.email as string,
+      name: userRecord?.name as string,
+      role: userRecord?.role as 'admin' | 'member' | 'observer',
+      avatar_url: userRecord?.avatar_url as string | undefined,
+      is_active: userRecord?.is_active as boolean,
+      created_at: userRecord?.created_at as string,
+      updated_at: userRecord?.updated_at as string
+    };
+    
+    // Create session
+    const { token, session } = await createSession(
+      db, 
+      user, 
+      c.env.JWT_SECRET,
+      parseInt(c.env.SESSION_DURATION || '86400')
+    );
+    
+    return c.json({ user, token });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
   }
-  
-  // Hash password
-  const passwordHash = await Password.hash(password);
-  const userId = nanoid();
-  
-  // Create user
-  await db.prepare(`
-    INSERT INTO users (id, email, password_hash, name, role)
-    VALUES (?, ?, ?, ?, 'member')
-  `).bind(userId, email, passwordHash, name).run();
-  
-  // Get created user
-  const user = await db.prepare(
-    'SELECT * FROM users WHERE id = ?'
-  ).bind(userId).first() as User;
-  
-  // Create session
-  const { token, session } = await createSession(
-    db, 
-    user, 
-    c.env.JWT_SECRET,
-    parseInt(c.env.SESSION_DURATION || '86400')
-  );
-  
-  return c.json({ user, token });
 });
 
 // Login
 app.post('/api/auth/login', async (c) => {
-  const { email, password } = await c.req.json();
-  const db = c.env.DB;
-  
-  // Get user
-  const user = await db.prepare(`
-    SELECT * FROM users WHERE email = ? AND is_active = true
-  `).bind(email).first() as User | null;
-  
-  if (!user) {
-    return c.json({ error: 'Invalid credentials' }, 401);
+  try {
+    const { email, password } = await c.req.json();
+    const db = c.env.DB;
+    
+    if (!email || !password) {
+      return c.json({ error: 'Email and password are required' }, 400);
+    }
+    
+    // Get user with password hash
+    const userRecord = await db.prepare(`
+      SELECT * FROM users WHERE email = ? AND is_active = true
+    `).bind(email).first();
+    
+    if (!userRecord) {
+      return c.json({ error: 'Invalid credentials' }, 401);
+    }
+    
+    // Verify password
+    const isValid = await Password.verify(password, userRecord.password_hash as string);
+    if (!isValid) {
+      return c.json({ error: 'Invalid credentials' }, 401);
+    }
+    
+    // Create user object without password
+    const user: User = {
+      id: userRecord.id as string,
+      email: userRecord.email as string,
+      name: userRecord.name as string,
+      role: userRecord.role as 'admin' | 'member' | 'observer',
+      avatar_url: userRecord.avatar_url as string | undefined,
+      is_active: userRecord.is_active as boolean,
+      created_at: userRecord.created_at as string,
+      updated_at: userRecord.updated_at as string
+    };
+    
+    // Create session
+    const { token, session } = await createSession(
+      db,
+      user,
+      c.env.JWT_SECRET,
+      parseInt(c.env.SESSION_DURATION || '86400')
+    );
+    
+    return c.json({ user, token });
+  } catch (error) {
+    console.error('Login error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
   }
-  
-  // Verify password
-  const isValid = await Password.verify(password, user.password_hash);
-  if (!isValid) {
-    return c.json({ error: 'Invalid credentials' }, 401);
-  }
-  
-  // Create session
-  const { token, session } = await createSession(
-    db,
-    user,
-    c.env.JWT_SECRET,
-    parseInt(c.env.SESSION_DURATION || '86400')
-  );
-  
-  // Remove password hash from response
-  delete user.password_hash;
-  
-  return c.json({ user, token });
 });
 
 // Logout

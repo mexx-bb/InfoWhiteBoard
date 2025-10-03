@@ -7,6 +7,7 @@ export interface User {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  password_hash?: string; // Optional, nur beim Login vorhanden
 }
 
 export interface Workspace {
