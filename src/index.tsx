@@ -568,9 +568,25 @@ app.get('/', (c) => {
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="/manifest.json">
     <title>TaskBoard - Team Collaboration</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Add Tailwind config for better mobile support
+        tailwind.config = {
+            theme: {
+                extend: {
+                    screens: {
+                        'xs': '475px',
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <link href="/static/style.css" rel="stylesheet">
     <style>
@@ -637,27 +653,27 @@ app.get('/', (c) => {
 <body class="bg-gray-50">
     <div id="app">
         <!-- Navigation -->
-        <nav class="bg-white shadow-sm border-b">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
+        <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-14 sm:h-16">
                     <div class="flex items-center">
-                        <i class="fas fa-tasks text-2xl text-indigo-600 mr-3"></i>
-                        <h1 class="text-xl font-bold text-gray-900">TaskBoard</h1>
+                        <i class="fas fa-tasks text-lg sm:text-2xl text-indigo-600 mr-2 sm:mr-3"></i>
+                        <h1 class="text-lg sm:text-xl font-bold text-gray-900">TaskBoard</h1>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <button id="createBoardBtn" class="hidden bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
-                            <i class="fas fa-plus mr-2"></i>Neues Board
+                    <div class="flex items-center space-x-2 sm:space-x-4">
+                        <button id="createBoardBtn" class="hidden bg-indigo-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-indigo-700 text-sm sm:text-base">
+                            <i class="fas fa-plus mr-1 sm:mr-2"></i><span class="hidden sm:inline">Neues Board</span>
                         </button>
                         <div id="userMenu" class="hidden relative">
-                            <button class="flex items-center space-x-2">
-                                <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white">
-                                    <i class="fas fa-user"></i>
+                            <button class="flex items-center space-x-1 sm:space-x-2">
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white">
+                                    <i class="fas fa-user text-xs sm:text-sm"></i>
                                 </div>
-                                <span id="userName" class="text-gray-700"></span>
+                                <span id="userName" class="text-gray-700 text-sm sm:text-base hidden sm:inline"></span>
                             </button>
                         </div>
-                        <button id="logoutBtn" class="hidden text-gray-600 hover:text-gray-900">
-                            <i class="fas fa-sign-out-alt"></i>
+                        <button id="logoutBtn" class="hidden text-gray-600 hover:text-gray-900 p-2">
+                            <i class="fas fa-sign-out-alt text-sm sm:text-base"></i>
                         </button>
                     </div>
                 </div>
@@ -667,9 +683,9 @@ app.get('/', (c) => {
         <!-- Main Content -->
         <main id="mainContent" class="py-8">
             <!-- Login Form -->
-            <div id="loginView" class="max-w-md mx-auto px-4">
-                <div class="bg-white rounded-lg shadow-lg p-8">
-                    <h2 class="text-2xl font-bold mb-6 text-center">Anmelden</h2>
+            <div id="loginView" class="max-w-md mx-auto px-4 py-8 sm:py-12">
+                <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+                    <h2 class="text-xl sm:text-2xl font-bold mb-6 text-center">Anmelden</h2>
                     <form id="loginForm">
                         <div class="mb-4">
                             <label class="block text-gray-700 mb-2">E-Mail</label>
@@ -697,9 +713,9 @@ app.get('/', (c) => {
             </div>
 
             <!-- Register Form -->
-            <div id="registerView" class="hidden max-w-md mx-auto px-4">
-                <div class="bg-white rounded-lg shadow-lg p-8">
-                    <h2 class="text-2xl font-bold mb-6 text-center">Registrieren</h2>
+            <div id="registerView" class="hidden max-w-md mx-auto px-4 py-8 sm:py-12">
+                <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+                    <h2 class="text-xl sm:text-2xl font-bold mb-6 text-center">Registrieren</h2>
                     <form id="registerForm">
                         <div class="mb-4">
                             <label class="block text-gray-700 mb-2">Name</label>
@@ -729,32 +745,40 @@ app.get('/', (c) => {
             <!-- Board View -->
             <div id="boardView" class="hidden">
                 <div class="board-bg min-h-screen">
-                    <div class="py-4">
-                        <div class="flex items-center justify-between mb-4 px-4 text-white">
-                            <div class="flex items-center gap-3">
-                                <button onclick="app.showWorkspaceView()" class="text-white/80 hover:text-white">
-                                    <i class="fas fa-arrow-left"></i>
+                    <div class="py-3 sm:py-4">
+                        <div class="flex items-center justify-between mb-3 sm:mb-4 px-3 sm:px-4 text-white">
+                            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                                <button onclick="app.showWorkspaceView()" class="text-white/80 hover:text-white p-1">
+                                    <i class="fas fa-arrow-left text-sm sm:text-base"></i>
                                 </button>
-                                <h2 id="boardTitle" class="text-xl font-semibold"></h2>
+                                <h2 id="boardTitle" class="text-base sm:text-xl font-semibold truncate"></h2>
                             </div>
-                            <div class="flex gap-2">
-                                <button id="addListBtn" class="bg-white/10 backdrop-blur px-3 py-1.5 rounded text-sm hover:bg-white/20 transition">
+                            <div class="flex gap-1 sm:gap-2">
+                                <button id="mobileMenuBtn" class="sm:hidden bg-white/10 backdrop-blur p-2 rounded">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <button id="addListBtn" class="hidden sm:inline-flex bg-white/10 backdrop-blur px-3 py-1.5 rounded text-sm hover:bg-white/20 transition items-center">
                                     <i class="fas fa-plus mr-1.5 text-xs"></i>Liste hinzufügen
                                 </button>
                             </div>
                         </div>
                         
-                        <div id="listsContainer" class="flex gap-3 overflow-x-auto pb-4 px-4">
+                        <div id="listsContainer" class="flex gap-2 sm:gap-3 overflow-x-auto pb-4 px-3 sm:px-4 mobile-scroll">
                             <!-- Lists will be dynamically added here -->
                         </div>
+                        
+                        <!-- Mobile Add List Button -->
+                        <button id="mobileAddListBtn" class="sm:hidden fixed bottom-6 right-6 bg-indigo-600 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center z-40">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Workspace View -->
-            <div id="workspaceView" class="hidden max-w-7xl mx-auto px-4">
-                <h2 class="text-2xl font-bold mb-6">Meine Arbeitsbereiche</h2>
-                <div id="workspacesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="workspaceView" class="hidden max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+                <h2 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Meine Arbeitsbereiche</h2>
+                <div id="workspacesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                     <!-- Workspaces will be dynamically added here -->
                 </div>
             </div>

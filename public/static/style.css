@@ -195,13 +195,143 @@
     }
 }
 
+/* Mobile-specific styles */
+.mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+
+.mobile-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+/* Touch-friendly card interactions */
+@media (pointer: coarse) {
+    .card-item {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        touch-action: pan-y;
+    }
+    
+    .card-item:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+}
+
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
+    /* Mobile list columns */
     .list-column {
-        width: 90vw !important;
+        width: 280px !important;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+    
+    /* First and last list padding for better edge visibility */
+    .list-column:first-child {
+        margin-left: 0;
+    }
+    
+    .list-column:last-child {
+        margin-right: 12px;
+    }
+    
+    /* Smaller cards on mobile */
+    .card-item {
+        font-size: 13px;
+    }
+    
+    .card-item h4 {
+        font-size: 13px;
+    }
+    
+    .card-item p {
+        font-size: 11px;
+    }
+    
+    /* Compact member avatars */
+    .member-avatar {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+    
+    /* Mobile-optimized drag indicator */
+    .drag-handle {
+        display: block;
+        width: 100%;
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        margin: 0 auto 8px;
+    }
+    
+    /* Better touch targets */
+    button, a {
+        min-height: 44px;
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Sticky board header on mobile */
+    .board-header {
+        position: sticky;
+        top: 56px;
+        z-index: 30;
+        background: inherit;
+    }
+    
+    /* Mobile FAB button */
+    .fab-button {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .fab-button:active {
+        transform: scale(0.95);
+    }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .list-column {
+        width: 300px !important;
+    }
+}
+
+/* Landscape mode optimizations */
+@media (max-height: 500px) and (orientation: landscape) {
+    nav {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+    
+    .board-bg {
+        padding-top: 0.5rem;
     }
     
     #listsContainer {
-        padding: 0 10px;
+        max-height: calc(100vh - 120px);
     }
+}
+
+/* PWA standalone mode */
+@media all and (display-mode: standalone) {
+    nav {
+        padding-top: env(safe-area-inset-top);
+    }
+    
+    .fab-button {
+        bottom: calc(24px + env(safe-area-inset-bottom));
+        right: calc(24px + env(safe-area-inset-right));
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    /* Add dark mode styles if needed */
 }

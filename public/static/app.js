@@ -36,6 +36,57 @@ class TaskBoardApp {
         // Board actions
         document.getElementById('createBoardBtn')?.addEventListener('click', () => this.createBoard());
         document.getElementById('addListBtn')?.addEventListener('click', () => this.addList());
+        
+        // Mobile specific
+        document.getElementById('mobileAddListBtn')?.addEventListener('click', () => this.addList());
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => this.toggleMobileMenu());
+        
+        // Touch support detection
+        this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Add mobile class to body if touch device
+        if (this.isTouchDevice) {
+            document.body.classList.add('touch-device');
+        }
+    }
+    
+    toggleMobileMenu() {
+        // Create mobile menu overlay
+        const existingMenu = document.getElementById('mobileMenuOverlay');
+        if (existingMenu) {
+            existingMenu.remove();
+            return;
+        }
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'mobileMenuOverlay';
+        overlay.className = 'fixed inset-0 bg-black/50 z-50 sm:hidden';
+        overlay.innerHTML = `
+            <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-xl p-4 space-y-2">
+                <button onclick="app.addList(); app.toggleMobileMenu();" class="w-full text-left p-3 hover:bg-gray-50 rounded-lg">
+                    <i class="fas fa-plus mr-3"></i>Neue Liste
+                </button>
+                <button onclick="app.showBoardSettings(); app.toggleMobileMenu();" class="w-full text-left p-3 hover:bg-gray-50 rounded-lg">
+                    <i class="fas fa-cog mr-3"></i>Board-Einstellungen
+                </button>
+                <button onclick="app.showWorkspaceView(); app.toggleMobileMenu();" class="w-full text-left p-3 hover:bg-gray-50 rounded-lg">
+                    <i class="fas fa-home mr-3"></i>Zur Übersicht
+                </button>
+                <button onclick="app.toggleMobileMenu();" class="w-full text-center p-3 bg-gray-100 rounded-lg font-medium">
+                    Abbrechen
+                </button>
+            </div>
+        `;
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.remove();
+            }
+        });
+        document.body.appendChild(overlay);
+    }
+    
+    showBoardSettings() {
+        alert('Board-Einstellungen (coming soon)');
     }
 
     // ============= AUTH METHODS =============
@@ -389,13 +440,14 @@ class TaskBoardApp {
 
     createListElement(list) {
         const listDiv = document.createElement('div');
-        listDiv.className = 'list-column bg-white/90 backdrop-blur rounded-lg p-3 w-72 flex-shrink-0 shadow-sm';
+        const isMobile = window.innerWidth < 640;
+        listDiv.className = `list-column bg-white/90 backdrop-blur rounded-lg p-3 ${isMobile ? 'w-72' : 'w-72'} flex-shrink-0 shadow-sm`;
         listDiv.dataset.listId = list.id;
         
         listDiv.innerHTML = `
             <div class="flex justify-between items-center mb-3 px-2">
                 <h3 class="font-semibold text-gray-700 text-sm">${list.name}</h3>
-                <button onclick="app.addCard('${list.id}')" class="text-gray-400 hover:text-gray-600 transition p-1">
+                <button onclick="app.addCard('${list.id}')" class="text-gray-400 hover:text-gray-600 active:text-gray-800 transition p-2 -mr-2">
                     <i class="fas fa-plus text-xs"></i>
                 </button>
             </div>
@@ -406,6 +458,9 @@ class TaskBoardApp {
                     return this.createCardHTML(card);
                 }).join('') : ''}
             </div>
+            <button onclick="app.addCard('${list.id}')" class="w-full mt-2 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded text-xs transition">
+                <i class="fas fa-plus mr-1"></i>Karte hinzufügen
+            </button>
         `;
 
         // Setup drag and drop for the list
@@ -496,12 +551,81 @@ class TaskBoardApp {
             card.removeEventListener('dragstart', this.handleDragStart);
             card.removeEventListener('dragend', this.handleDragEnd);
             card.removeEventListener('click', this.handleCardClick);
+            card.removeEventListener('touchstart', this.handleTouchStart);
+            card.removeEventListener('touchmove', this.handleTouchMove);
+            card.removeEventListener('touchend', this.handleTouchEnd);
             
-            // Add new listeners
+            // Add desktop drag listeners
             card.addEventListener('dragstart', this.handleDragStart.bind(this));
             card.addEventListener('dragend', this.handleDragEnd.bind(this));
             card.addEventListener('click', this.handleCardClick.bind(this));
+            
+            // Add touch support for mobile
+            if (this.isTouchDevice) {
+                card.addEventListener('touchstart', this.handleTouchStart.bind(this), {passive: false});
+                card.addEventListener('touchmove', this.handleTouchMove.bind(this), {passive: false});
+                card.addEventListener('touchend', this.handleTouchEnd.bind(this));
+            }
         });
+    }
+    
+    // Touch event handlers for mobile drag and drop
+    handleTouchStart(e) {
+        const card = e.currentTarget;
+        this.touchStartY = e.touches[0].clientY;
+        this.touchStartX = e.touches[0].clientX;
+        this.touchCard = card;
+        this.touchTimeout = setTimeout(() => {
+            card.classList.add('dragging');
+            this.draggedCard = card;
+            this.draggedCardOriginalList = card.parentElement;
+            // Haptic feedback if available
+            if (window.navigator.vibrate) {
+                window.navigator.vibrate(50);
+            }
+        }, 200); // Long press to start drag
+    }
+    
+    handleTouchMove(e) {
+        if (!this.draggedCard) {
+            // Clear timeout if moving before long press
+            clearTimeout(this.touchTimeout);
+            return;
+        }
+        
+        e.preventDefault();
+        const touch = e.touches[0];
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (elementBelow) {
+            const dropZone = elementBelow.closest('.cards-container');
+            if (dropZone && dropZone !== this.currentDropZone) {
+                // Remove highlight from previous zone
+                if (this.currentDropZone) {
+                    this.currentDropZone.classList.remove('drag-over');
+                }
+                // Add highlight to new zone
+                dropZone.classList.add('drag-over');
+                this.currentDropZone = dropZone;
+                
+                // Move card preview
+                const afterElement = this.getDragAfterElement(dropZone, touch.clientY);
+                if (afterElement == null) {
+                    dropZone.appendChild(this.draggedCard);
+                } else {
+                    dropZone.insertBefore(this.draggedCard, afterElement);
+                }
+            }
+        }
+    }
+    
+    handleTouchEnd(e) {
+        clearTimeout(this.touchTimeout);
+        if (this.draggedCard) {
+            this.handleDragEnd({currentTarget: this.draggedCard});
+        }
+        this.touchCard = null;
+        this.currentDropZone = null;
     }
 
     handleDragStart(e) {
