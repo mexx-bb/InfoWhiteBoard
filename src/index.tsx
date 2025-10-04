@@ -590,70 +590,67 @@ app.get('/', (c) => {
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <link href="/static/style.css" rel="stylesheet">
     <style>
-        .drag-over { 
-            background-color: #e5e7eb;
-            border: 2px dashed #9ca3af;
+        /* Animation utilities */
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
         }
-        .dragging { 
-            opacity: 0.5;
-            cursor: grabbing !important;
-            transform: rotate(2deg);
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .card-item {
-            cursor: grab;
+        
+        /* Glass button styles */
+        .btn-glass {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(168, 85, 247, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-glass:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+        
+        /* Label styles with glow */
+        .label-glow {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
             transition: all 0.2s ease;
         }
-        .card-item:active {
-            cursor: grabbing;
+        
+        .label-glow:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
-        .card-shadow { 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12); 
+        
+        /* Smooth scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-        .board-bg { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
         }
-        .cards-container {
-            min-height: 100px;
-            padding: 8px;
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
             border-radius: 4px;
-            transition: all 0.2s ease;
         }
-        .cards-container:empty::after {
-            content: 'Keine Karten';
-            display: block;
-            text-align: center;
-            padding: 20px;
-            color: #9ca3af;
-            font-size: 14px;
-        }
-        /* Smooth transitions for card movements */
-        .card-item {
-            animation: slideIn 0.2s ease;
-        }
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        /* Visual feedback for drop zones */
-        .list-column {
-            transition: all 0.2s ease;
-        }
-        .list-column.active-drop {
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
         }
     </style>
 </head>
 <body class="bg-gray-50">
     <div id="app">
         <!-- Navigation -->
-        <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
+        <nav class="glass-nav sticky top-0 z-50 border-b border-white/20">
             <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-14 sm:h-16">
                     <div class="flex items-center">
@@ -684,7 +681,7 @@ app.get('/', (c) => {
         <main id="mainContent" class="py-8">
             <!-- Login Form -->
             <div id="loginView" class="max-w-md mx-auto px-4 py-8 sm:py-12">
-                <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+                <div class="glass rounded-xl p-6 sm:p-8 animate-fade-in">
                     <h2 class="text-xl sm:text-2xl font-bold mb-6 text-center">Anmelden</h2>
                     <form id="loginForm">
                         <div class="mb-4">
@@ -697,7 +694,7 @@ app.get('/', (c) => {
                             <input type="password" id="loginPassword" required
                                 class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">
+                        <button type="submit" class="w-full btn-glass text-white py-2 rounded-lg font-medium">
                             Anmelden
                         </button>
                     </form>
@@ -714,7 +711,7 @@ app.get('/', (c) => {
 
             <!-- Register Form -->
             <div id="registerView" class="hidden max-w-md mx-auto px-4 py-8 sm:py-12">
-                <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+                <div class="glass rounded-xl p-6 sm:p-8 animate-fade-in">
                     <h2 class="text-xl sm:text-2xl font-bold mb-6 text-center">Registrieren</h2>
                     <form id="registerForm">
                         <div class="mb-4">
@@ -732,7 +729,7 @@ app.get('/', (c) => {
                             <input type="password" id="registerPassword" required
                                 class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">
+                        <button type="submit" class="w-full btn-glass text-white py-2 rounded-lg font-medium">
                             Registrieren
                         </button>
                     </form>

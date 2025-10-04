@@ -751,6 +751,11 @@ class TaskBoardApp {
         const container = document.querySelector(`[data-list-id="${listId}"]`);
         const position = container.children.length;
 
+        // Add skeleton loader while creating
+        const skeleton = document.createElement('div');
+        skeleton.className = 'skeleton h-20 rounded-md mb-2';
+        container.appendChild(skeleton);
+
         try {
             const response = await fetch(`/api/lists/${listId}/cards`, {
                 method: 'POST',
@@ -759,11 +764,80 @@ class TaskBoardApp {
             });
 
             if (response.ok) {
+                // Remove skeleton
+                skeleton.remove();
+                
+                // Reload board with animation
                 await this.loadBoard(this.currentBoard.id);
+                
+                // Add animation class to new card
+                setTimeout(() => {
+                    const cards = container.querySelectorAll('.card-item');
+                    if (cards.length > 0) {
+                        const newCard = cards[cards.length - 1];
+                        newCard.classList.add('new-card', 'bounce-in');
+                    }
+                }, 100);
+                
+                // Success feedback
+                this.showToast('Karte erfolgreich erstellt', 'success');
+            } else {
+                skeleton.remove();
+                this.showToast('Fehler beim Erstellen der Karte', 'error');
             }
         } catch (error) {
-            alert('Fehler beim Erstellen der Karte');
+            skeleton.remove();
+            this.showToast('Verbindungsfehler', 'error');
         }
+    }
+    
+    showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 glass fade-in ${
+            type === 'success' ? 'bg-green-500/90' : 
+            type === 'error' ? 'bg-red-500/90' : 
+            'bg-blue-500/90'
+        } text-white`;
+        toast.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${
+                    type === 'success' ? 'check-circle' : 
+                    type === 'error' ? 'exclamation-circle' : 
+                    'info-circle'
+                } mr-2"></i>
+                ${message}
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => toast.classList.add('translate-y-0'), 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    // Add ripple effect to clicks
+    addRippleEffect(e) {
+        const button = e.currentTarget;
+        const ripple = document.createElement('span');
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        ripple.classList.add('ripple');
+        
+        button.appendChild(ripple);
+        
+        setTimeout(() => ripple.remove(), 600);
     }
 
     async moveCard(cardId, listId, position = 0) {
