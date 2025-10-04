@@ -18,6 +18,7 @@ class TaskBoardApp {
 
     async init() {
         this.attachEventListeners();
+        this.initializeFeatureManagers();
         if (this.token) {
             await this.loadUser();
         } else {
@@ -40,6 +41,44 @@ class TaskBoardApp {
         // Mobile specific
         document.getElementById('mobileAddListBtn')?.addEventListener('click', () => this.addList());
         document.getElementById('mobileMenuBtn')?.addEventListener('click', () => this.toggleMobileMenu());
+        
+        // Advanced Features
+        document.getElementById('themeToggleBtn')?.addEventListener('click', () => {
+            if (window.themeManager) {
+                window.themeManager.showThemeSelector();
+            }
+        });
+        
+        document.getElementById('analyticsBtn')?.addEventListener('click', () => {
+            if (window.analyticsDashboard) {
+                window.analyticsDashboard.show();
+            }
+        });
+        
+        document.getElementById('gamificationBtn')?.addEventListener('click', () => {
+            if (window.gamificationSystem && this.user) {
+                window.gamificationSystem.showProfile(this.user.id);
+            }
+        });
+        
+    }
+    
+    initializeFeatureManagers() {
+        // Initialize theme with user preference
+        if (window.themeManager) {
+            const savedTheme = localStorage.getItem('selectedTheme');
+            if (savedTheme) {
+                window.themeManager.applyTheme(savedTheme);
+            }
+        }
+        
+        // Initialize gamification for logged-in users
+        setTimeout(() => {
+            if (window.gamificationSystem && this.user) {
+                window.gamificationSystem.initializeUser(this.user.id);
+                this.updateLevelBadge();
+            }
+        }, 100);
         
         // Touch support detection
         this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -173,6 +212,9 @@ class TaskBoardApp {
                 const data = await response.json();
                 this.user = data.user;
                 this.showWorkspaceView();
+                
+                // Initialize features for logged-in user
+                this.initializeUserFeatures();
             } else {
                 this.handleLogout();
             }
@@ -181,6 +223,49 @@ class TaskBoardApp {
         }
     }
 
+    // ============= FEATURE INTEGRATION =============
+    
+    initializeUserFeatures() {
+        // Show advanced feature buttons
+        document.getElementById('themeToggleBtn')?.classList.remove('hidden');
+        document.getElementById('analyticsBtn')?.classList.remove('hidden');
+        document.getElementById('gamificationBtn')?.classList.remove('hidden');
+        
+        // Initialize gamification
+        if (window.gamificationSystem && this.user) {
+            window.gamificationSystem.initializeUser(this.user.id);
+            this.updateLevelBadge();
+        }
+    }
+    
+    updateLevelBadge() {
+        if (window.gamificationSystem) {
+            const level = window.gamificationSystem.getUserLevel();
+            const badge = document.getElementById('levelBadge');
+            if (badge && level > 0) {
+                badge.textContent = level;
+                badge.classList.remove('hidden');
+            }
+        }
+    }
+    
+    trackAnalytics(action, data = {}) {
+        if (window.analyticsDashboard) {
+            window.analyticsDashboard.trackEvent(action, {
+                boardId: this.currentBoard?.id,
+                userId: this.user?.id,
+                ...data
+            });
+        }
+    }
+    
+    checkAchievements(action, data = {}) {
+        if (window.gamificationSystem && this.user) {
+            window.gamificationSystem.checkAchievement(action, data);
+            this.updateLevelBadge();
+        }
+    }
+    
     // ============= VIEW METHODS =============
     
     showLoginView() {
@@ -380,6 +465,51 @@ class TaskBoardApp {
     }
 
     async createBoard() {
+        // Use board features template selector if available
+        if (window.boardFeatures) {
+            window.boardFeatures.showTemplateSelector(async (template) => {
+                const name = prompt('Name des Boards:');
+                if (!name) return;
+                
+                const description = prompt('Beschreibung (optional):');
+                const colors = ['#0079BF', '#D29034', '#519839', '#B04632', '#89609E', '#CD5A91'];
+                const background_color = colors[Math.floor(Math.random() * colors.length)];
+                
+                try {
+                    const response = await fetch('/api/boards', {
+                        method: 'POST',
+                        headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            workspace_id: this.currentWorkspace,
+                            name, 
+                            description,
+                            background_color,
+                            template: template?.id
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Apply template if selected
+                        if (template) {
+                            await window.boardFeatures.applyTemplate(data.board.id, template);
+                        }
+                        
+                        this.showBoardView(data.board.id);
+                        
+                        // Track creation
+                        this.trackAnalytics('board_created', { template: template?.id });
+                        this.checkAchievements('board_created');
+                    }
+                } catch (error) {
+                    alert('Fehler beim Erstellen des Boards');
+                }
+            });
+            return;
+        }
+        
+        // Fallback to simple creation
         const name = prompt('Name des Boards:');
         if (!name) return;
         
@@ -745,6 +875,15 @@ class TaskBoardApp {
     }
 
     async addCard(listId) {
+        // Use enhanced card creation if collaboration features are available
+        if (window.collaborationFeatures) {
+            window.collaborationFeatures.showEnhancedCardCreator(listId, async (cardData) => {
+                await this.createCardWithData(listId, cardData);
+            });
+            return;
+        }
+        
+        // Fallback to simple prompt
         const title = prompt('Titel der Karte:');
         if (!title) return;
 
@@ -781,6 +920,52 @@ class TaskBoardApp {
                 
                 // Success feedback
                 this.showToast('Karte erfolgreich erstellt', 'success');
+                
+                // Track analytics and achievements
+                this.trackAnalytics('card_created', { listId });
+                this.checkAchievements('card_created', { boardId: this.currentBoard.id });
+            } else {
+                skeleton.remove();
+                this.showToast('Fehler beim Erstellen der Karte', 'error');
+            }
+        } catch (error) {
+            skeleton.remove();
+            this.showToast('Verbindungsfehler', 'error');
+        }
+    }
+    
+    async createCardWithData(listId, cardData) {
+        const container = document.querySelector(`[data-list-id="${listId}"]`);
+        const position = container.children.length;
+        
+        // Add skeleton loader while creating
+        const skeleton = document.createElement('div');
+        skeleton.className = 'skeleton h-20 rounded-md mb-2';
+        container.appendChild(skeleton);
+        
+        try {
+            const response = await fetch(`/api/lists/${listId}/cards`, {
+                method: 'POST',
+                headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...cardData, position })
+            });
+            
+            if (response.ok) {
+                skeleton.remove();
+                await this.loadBoard(this.currentBoard.id);
+                
+                // Add animations and feedback
+                setTimeout(() => {
+                    const cards = container.querySelectorAll('.card-item');
+                    if (cards.length > 0) {
+                        const newCard = cards[cards.length - 1];
+                        newCard.classList.add('new-card', 'bounce-in');
+                    }
+                }, 100);
+                
+                this.showToast('Karte erfolgreich erstellt', 'success');
+                this.trackAnalytics('card_created', { listId, hasDescription: !!cardData.description });
+                this.checkAchievements('card_created', { boardId: this.currentBoard.id });
             } else {
                 skeleton.remove();
                 this.showToast('Fehler beim Erstellen der Karte', 'error');
@@ -848,7 +1033,11 @@ class TaskBoardApp {
                 body: JSON.stringify({ list_id: listId, position })
             });
             
-            if (!response.ok) {
+            if (response.ok) {
+                // Track successful card move
+                this.trackAnalytics('card_moved', { cardId, listId });
+                this.checkAchievements('card_moved', { boardId: this.currentBoard.id });
+            } else {
                 console.error('Failed to move card');
                 // Reload board to reset positions if move failed
                 await this.loadBoard(this.currentBoard.id);
@@ -861,8 +1050,13 @@ class TaskBoardApp {
     }
 
     showCardDetails(cardId) {
-        // Card details modal would go here
-        console.log('Show card details:', cardId);
+        // Use collaboration features for enhanced card view if available
+        if (window.collaborationFeatures) {
+            window.collaborationFeatures.showEnhancedCardModal(cardId);
+        } else {
+            // Fallback to simple view
+            console.log('Show card details:', cardId);
+        }
     }
 
     // ============= UTILITY METHODS =============

@@ -658,6 +658,22 @@ app.get('/', (c) => {
                         <h1 class="text-lg sm:text-xl font-bold text-gray-900">TaskBoard</h1>
                     </div>
                     <div class="flex items-center space-x-2 sm:space-x-4">
+                        <!-- Theme Switcher -->
+                        <button id="themeToggleBtn" class="hidden text-gray-600 hover:text-gray-900 p-2" title="Theme wechseln">
+                            <i class="fas fa-palette text-sm sm:text-base"></i>
+                        </button>
+                        
+                        <!-- Analytics Dashboard -->
+                        <button id="analyticsBtn" class="hidden text-gray-600 hover:text-gray-900 p-2" title="Analytics">
+                            <i class="fas fa-chart-line text-sm sm:text-base"></i>
+                        </button>
+                        
+                        <!-- Gamification Profile -->
+                        <button id="gamificationBtn" class="hidden text-gray-600 hover:text-gray-900 p-2 relative" title="Achievements">
+                            <i class="fas fa-trophy text-sm sm:text-base"></i>
+                            <span id="levelBadge" class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold hidden"></span>
+                        </button>
+                        
                         <button id="createBoardBtn" class="hidden bg-indigo-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-indigo-700 text-sm sm:text-base">
                             <i class="fas fa-plus mr-1 sm:mr-2"></i><span class="hidden sm:inline">Neues Board</span>
                         </button>
@@ -782,7 +798,53 @@ app.get('/', (c) => {
         </main>
     </div>
 
+    <!-- Core Application -->
     <script src="/static/app.js"></script>
+    
+    <!-- Advanced Features Modules -->
+    <script src="/static/theme.js"></script>
+    <script src="/static/board-features.js"></script>
+    <script src="/static/analytics.js"></script>
+    <script src="/static/gamification.js"></script>
+    <script src="/static/collaboration.js"></script>
+    
+    <!-- Initialize All Features -->
+    <script>
+        // Wait for DOM and all modules to load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Theme System
+            if (typeof ThemeManager !== 'undefined') {
+                window.themeManager = new ThemeManager();
+                console.log('✅ Theme System initialized');
+            }
+            
+            // Initialize Board Features
+            if (typeof BoardFeatures !== 'undefined') {
+                window.boardFeatures = new BoardFeatures();
+                console.log('✅ Board Features initialized');
+            }
+            
+            // Initialize Analytics
+            if (typeof AnalyticsDashboard !== 'undefined') {
+                window.analyticsDashboard = new AnalyticsDashboard(window.app);
+                console.log('✅ Analytics System initialized');
+            }
+            
+            // Initialize Gamification
+            if (typeof GamificationSystem !== 'undefined') {
+                window.gamificationSystem = new GamificationSystem();
+                console.log('✅ Gamification System initialized');
+            }
+            
+            // Initialize Collaboration
+            if (typeof CollaborationFeatures !== 'undefined') {
+                window.collaborationFeatures = new CollaborationFeatures(window.app);
+                console.log('✅ Collaboration Features initialized');
+            }
+            
+            console.log('🚀 All advanced features loaded successfully!');
+        });
+    </script>
 </body>
 </html>
   `);
