@@ -1,0 +1,389 @@
+{
+  "project": {
+    "name": "TaskBoard - Trello Clone",
+    "type": "web-application",
+    "description": "Complete Trello clone for 25 employees with real-time collaboration",
+    "deployment": "cloudflare-pages",
+    "repository": "https://github.com/mexx-bb/InfoWhiteBoard"
+  },
+  
+  "technical_stack": {
+    "backend": {
+      "framework": "Hono",
+      "runtime": "Cloudflare Workers",
+      "language": "TypeScript",
+      "authentication": "JWT with Web Crypto API",
+      "database": "Cloudflare D1 (SQLite)"
+    },
+    "frontend": {
+      "framework": "Vanilla JavaScript",
+      "styling": "Tailwind CSS CDN",
+      "design": "Glassmorphism with animations",
+      "libraries": [
+        "FontAwesome Icons",
+        "Chart.js (for analytics)",
+        "SortableJS (for drag-drop)"
+      ]
+    }
+  },
+  
+  "core_features": {
+    "authentication": {
+      "description": "JWT-based auth system",
+      "endpoints": [
+        "POST /api/auth/register",
+        "POST /api/auth/login",
+        "POST /api/auth/logout",
+        "GET /api/auth/me"
+      ],
+      "test_accounts": [
+        {
+          "email": "admin@taskboard.com",
+          "password": "admin123",
+          "role": "admin"
+        },
+        {
+          "email": "max.mueller@company.de",
+          "password": "test123",
+          "role": "member"
+        }
+      ]
+    },
+    
+    "workspace_management": {
+      "description": "Multiple workspaces per user",
+      "features": [
+        "Create/edit/delete workspaces",
+        "Invite members",
+        "Role-based permissions"
+      ]
+    },
+    
+    "board_system": {
+      "description": "Kanban boards with lists and cards",
+      "features": [
+        "Create boards from templates",
+        "Custom backgrounds and colors",
+        "Board member management",
+        "Archive/restore boards"
+      ]
+    },
+    
+    "drag_and_drop": {
+      "description": "Smooth drag & drop with touch support",
+      "implementation": "Native HTML5 DnD API + Touch events",
+      "features": [
+        "Card reordering within lists",
+        "Card moving between lists",
+        "Visual feedback during drag",
+        "Mobile touch support"
+      ]
+    }
+  },
+  
+  "advanced_features": {
+    "theme_system": {
+      "file": "public/static/theme.js",
+      "class": "ThemeManager",
+      "themes": ["light", "dark", "ocean", "forest", "sunset"],
+      "features": [
+        "Live theme switching",
+        "System preference detection",
+        "Persistent storage",
+        "CSS variable manipulation"
+      ]
+    },
+    
+    "board_templates": {
+      "file": "public/static/board-features.js",
+      "class": "BoardFeatures",
+      "templates": ["Scrum", "Kanban", "Bug Tracking", "Weekly Planning"],
+      "features": [
+        "WIP limits per column",
+        "Swimlanes",
+        "Story points",
+        "Custom columns"
+      ]
+    },
+    
+    "analytics_dashboard": {
+      "file": "public/static/analytics.js",
+      "class": "AnalyticsDashboard",
+      "metrics": [
+        "Cards created/moved/completed",
+        "Burndown charts",
+        "Velocity tracking",
+        "Activity heatmap",
+        "Column performance"
+      ]
+    },
+    
+    "gamification": {
+      "file": "public/static/gamification.js",
+      "class": "GamificationSystem",
+      "features": [
+        "XP and leveling system",
+        "9 achievement types",
+        "Daily streaks",
+        "Level badges",
+        "Confetti animations"
+      ]
+    },
+    
+    "collaboration": {
+      "file": "public/static/collaboration.js",
+      "class": "CollaborationFeatures",
+      "features": [
+        "Enhanced card creator",
+        "Rich text descriptions",
+        "@mentions",
+        "File attachments",
+        "Thread discussions",
+        "Emoji reactions"
+      ]
+    }
+  },
+  
+  "database_schema": {
+    "tables": [
+      {
+        "name": "users",
+        "columns": ["id", "email", "name", "password_hash", "role", "created_at"],
+        "indexes": ["email"]
+      },
+      {
+        "name": "workspaces",
+        "columns": ["id", "name", "description", "owner_id", "created_at"],
+        "relations": "owner_id -> users.id"
+      },
+      {
+        "name": "boards",
+        "columns": ["id", "workspace_id", "name", "description", "background_color", "created_at"],
+        "relations": "workspace_id -> workspaces.id"
+      },
+      {
+        "name": "lists",
+        "columns": ["id", "board_id", "name", "position", "wip_limit", "created_at"],
+        "relations": "board_id -> boards.id"
+      },
+      {
+        "name": "cards",
+        "columns": ["id", "list_id", "title", "description", "position", "priority", "due_date", "created_at"],
+        "relations": "list_id -> lists.id"
+      },
+      {
+        "name": "sessions",
+        "columns": ["id", "user_id", "token", "expires_at", "created_at"],
+        "relations": "user_id -> users.id"
+      }
+    ]
+  },
+  
+  "file_structure": {
+    "root": "/home/user/webapp",
+    "structure": {
+      "src/": {
+        "index.tsx": "Main Hono backend with all API endpoints",
+        "middleware/": {
+          "auth.ts": "JWT authentication middleware"
+        },
+        "lib/": {
+          "auth.ts": "Password hashing and session management"
+        },
+        "types/": {
+          "index.ts": "TypeScript type definitions"
+        }
+      },
+      "public/static/": {
+        "app.js": "Main frontend application class",
+        "theme.js": "Theme management system",
+        "board-features.js": "Board templates and features",
+        "analytics.js": "Analytics dashboard",
+        "gamification.js": "Achievement and XP system",
+        "collaboration.js": "Enhanced collaboration features",
+        "style.css": "Glassmorphism styles and animations",
+        "admin.js": "Admin dashboard functionality"
+      },
+      "migrations/": {
+        "001_initial_schema.sql": "Complete database schema"
+      },
+      "config_files": {
+        "package.json": "Dependencies and scripts",
+        "wrangler.jsonc": "Cloudflare configuration",
+        "ecosystem.config.cjs": "PM2 configuration",
+        "vite.config.ts": "Build configuration",
+        "tsconfig.json": "TypeScript configuration"
+      }
+    }
+  },
+  
+  "ui_components": {
+    "design_system": "Glassmorphism with Tailwind CSS",
+    "components": [
+      {
+        "name": "Navigation Bar",
+        "features": ["Logo", "Theme switcher", "Analytics button", "Gamification badge", "User menu"]
+      },
+      {
+        "name": "Board View",
+        "features": ["Lists container", "Horizontal scroll", "Add list button", "Board settings"]
+      },
+      {
+        "name": "Card Component",
+        "features": ["Title", "Labels", "Due date", "Members", "Priority indicator", "Drag handle"]
+      },
+      {
+        "name": "Modals",
+        "types": ["Login/Register", "Card details", "Theme selector", "Analytics dashboard", "Achievements"]
+      }
+    ]
+  },
+  
+  "api_endpoints": {
+    "auth": [
+      "POST /api/auth/register - User registration",
+      "POST /api/auth/login - User login",
+      "POST /api/auth/logout - Session termination",
+      "GET /api/auth/me - Current user info"
+    ],
+    "boards": [
+      "GET /api/boards - List user boards",
+      "POST /api/boards - Create new board",
+      "GET /api/boards/:id - Get board with lists and cards",
+      "PUT /api/boards/:id - Update board",
+      "DELETE /api/boards/:id - Delete board"
+    ],
+    "lists": [
+      "POST /api/boards/:id/lists - Create list",
+      "PUT /api/lists/:id - Update list",
+      "DELETE /api/lists/:id - Delete list"
+    ],
+    "cards": [
+      "POST /api/lists/:id/cards - Create card",
+      "PUT /api/cards/:id - Update card",
+      "PUT /api/cards/:id/move - Move card",
+      "DELETE /api/cards/:id - Delete card"
+    ],
+    "admin": [
+      "GET /api/admin/users - List all users",
+      "PUT /api/admin/users/:id - Update user role",
+      "GET /api/admin/stats - System statistics"
+    ]
+  },
+  
+  "deployment_instructions": {
+    "local_development": [
+      "npm install",
+      "npm run build",
+      "pm2 start ecosystem.config.cjs",
+      "Access at http://localhost:3000"
+    ],
+    "cloudflare_deployment": [
+      "npx wrangler d1 create taskboard-production",
+      "Update wrangler.jsonc with database ID",
+      "npx wrangler d1 migrations apply taskboard-production",
+      "npm run deploy"
+    ]
+  },
+  
+  "key_features_to_implement": {
+    "must_have": [
+      "User authentication with JWT",
+      "Workspace and board management",
+      "Drag and drop functionality",
+      "Mobile responsive design",
+      "Real-time updates (WebSocket)",
+      "Role-based access control"
+    ],
+    "should_have": [
+      "Theme switching",
+      "Analytics dashboard",
+      "Gamification system",
+      "Rich text editor",
+      "File attachments",
+      "Email notifications"
+    ],
+    "nice_to_have": [
+      "Voice commands",
+      "AI suggestions",
+      "Calendar integration",
+      "Time tracking",
+      "Export to PDF/CSV"
+    ]
+  },
+  
+  "styling_requirements": {
+    "design": "Glassmorphism",
+    "colors": {
+      "primary": "#6366f1",
+      "secondary": "#a855f7",
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "error": "#ef4444"
+    },
+    "effects": [
+      "backdrop-filter: blur(10px)",
+      "background: rgba(255, 255, 255, 0.1)",
+      "border: 1px solid rgba(255, 255, 255, 0.2)",
+      "box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37)"
+    ],
+    "animations": [
+      "Fade in on load",
+      "Bounce on create",
+      "Smooth drag transitions",
+      "Ripple effects on click",
+      "Skeleton loaders"
+    ]
+  },
+  
+  "mobile_requirements": {
+    "responsive": "Full responsive from 320px",
+    "touch": "Touch events for drag & drop",
+    "pwa": {
+      "manifest": true,
+      "service_worker": true,
+      "offline_mode": true,
+      "installable": true
+    },
+    "viewport": "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  },
+  
+  "testing_data": {
+    "sample_workspace": "Mein Arbeitsbereich",
+    "sample_boards": ["Sprint Planning", "Bug Tracking", "Product Roadmap"],
+    "sample_lists": ["To Do", "In Progress", "Review", "Done"],
+    "sample_cards": [
+      {
+        "title": "Setup project",
+        "description": "Initialize repository and dependencies",
+        "priority": "high"
+      },
+      {
+        "title": "Design UI",
+        "description": "Create mockups and wireframes",
+        "priority": "medium"
+      }
+    ]
+  },
+  
+  "success_criteria": {
+    "performance": [
+      "Page load < 2 seconds",
+      "Smooth 60fps animations",
+      "Instant drag feedback",
+      "Offline capability"
+    ],
+    "functionality": [
+      "All CRUD operations working",
+      "Real-time updates",
+      "Data persistence",
+      "Multi-user support"
+    ],
+    "user_experience": [
+      "Intuitive interface",
+      "Mobile friendly",
+      "Keyboard accessible",
+      "Clear feedback messages"
+    ]
+  }
+}

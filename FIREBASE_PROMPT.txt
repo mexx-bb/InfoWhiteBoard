@@ -1,0 +1,87 @@
+FIREBASE/AI BUILD INSTRUCTION:
+
+Create a Trello clone with these exact specifications:
+
+PROJECT: TaskBoard - Complete Trello Clone
+GITHUB: https://github.com/mexx-bb/InfoWhiteBoard
+
+TECH STACK:
+- Backend: Hono framework + TypeScript on Cloudflare Workers
+- Frontend: Vanilla JavaScript (NO React/Vue)
+- Database: Cloudflare D1 SQLite
+- Styling: Tailwind CSS CDN + Glassmorphism
+- Auth: JWT with Web Crypto API
+
+FILE STRUCTURE:
+webapp/
+├── src/
+│   └── index.tsx (Hono backend with all APIs)
+├── public/static/
+│   ├── app.js (Main frontend class)
+│   ├── theme.js (5 themes: light/dark/ocean/forest/sunset)
+│   ├── board-features.js (Templates: Scrum/Kanban)
+│   ├── analytics.js (Dashboard with charts)
+│   ├── gamification.js (XP system + 9 achievements)
+│   ├── collaboration.js (Rich text editor)
+│   └── style.css (Glassmorphism effects)
+├── migrations/
+│   └── 001_schema.sql (6 tables: users/boards/lists/cards/sessions)
+└── wrangler.jsonc (Cloudflare config)
+
+CORE FEATURES:
+1. Authentication (JWT) - register/login/logout
+2. Workspaces - multiple per user
+3. Boards - with templates and backgrounds
+4. Lists - draggable columns with WIP limits
+5. Cards - drag & drop between lists
+6. Mobile - full responsive + touch support
+7. Themes - 5 color schemes with switcher
+8. Analytics - burndown charts, velocity
+9. Gamification - XP, levels, achievements
+10. Collaboration - rich text, mentions, reactions
+
+API ENDPOINTS:
+- POST /api/auth/register
+- POST /api/auth/login
+- GET /api/boards (list all)
+- POST /api/boards (create)
+- GET /api/boards/:id (with lists/cards)
+- POST /api/boards/:id/lists
+- POST /api/lists/:id/cards
+- PUT /api/cards/:id/move (drag & drop)
+
+DRAG & DROP CODE:
+```javascript
+class TaskBoardApp {
+  handleDragStart(e) {
+    this.draggedCard = e.target;
+    e.dataTransfer.effectAllowed = 'move';
+  }
+  handleDrop(e) {
+    const listId = e.target.closest('.list').dataset.listId;
+    this.moveCard(this.draggedCard.id, listId);
+  }
+}
+```
+
+GLASSMORPHISM CSS:
+```css
+.glass {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+```
+
+TEST ACCOUNTS:
+- admin@taskboard.com / admin123 (admin role)
+- max.mueller@company.de / test123 (member role)
+
+CRITICAL RULES:
+1. Use serveStatic from 'hono/cloudflare-workers' NOT '@hono/node-server'
+2. NO Node.js modules (fs, crypto, path) - use Web APIs only
+3. All files in public/static/ served at /static/*
+4. Initialize all 5 feature modules on page load
+5. Classes: ThemeManager, BoardFeatures, AnalyticsDashboard, GamificationSystem, CollaborationFeatures
+
+BUILD THIS EXACTLY AS SPECIFIED - IT'S ALREADY WORKING AT: https://github.com/mexx-bb/InfoWhiteBoard
