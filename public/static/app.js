@@ -269,6 +269,11 @@ class TaskBoardApp {
         document.getElementById('analyticsBtn')?.classList.remove('hidden');
         document.getElementById('gamificationBtn')?.classList.remove('hidden');
         
+        // Show admin panel button if user is admin
+        if (this.user && this.user.role === 'admin') {
+            document.getElementById('adminPanelBtn')?.classList.remove('hidden');
+        }
+        
         // Initialize gamification
         if (window.gamificationSystem && this.user) {
             window.gamificationSystem.initializeUser(this.user.id);
@@ -342,6 +347,11 @@ class TaskBoardApp {
         document.getElementById('themeToggleBtn')?.classList.remove('hidden');
         document.getElementById('analyticsBtn')?.classList.remove('hidden');
         document.getElementById('gamificationBtn')?.classList.remove('hidden');
+        
+        // Show admin panel button if user is admin
+        if (this.user && this.user.role === 'admin') {
+            document.getElementById('adminPanelBtn')?.classList.remove('hidden');
+        }
         
         // Update user name
         if (this.user) {
@@ -1129,6 +1139,70 @@ class TaskBoardApp {
 
     viewWorkspaceBoards(workspaceId) {
         this.loadWorkspaceBoards(workspaceId);
+    }
+    
+    // ============= COLLABORATION METHODS =============
+    
+    async inviteToWorkspace(workspaceId) {
+        const email = prompt('E-Mail-Adresse des neuen Mitarbeiters:');
+        if (!email) return;
+        
+        const role = confirm('Als Administrator hinzufügen? (Nein = Mitarbeiter)') ? 'admin' : 'member';
+        
+        try {
+            const response = await fetch(`/api/workspaces/${workspaceId}/invite`, {
+                method: 'POST',
+                headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, role })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.showToast(`${data.user.name} wurde eingeladen!`, 'success');
+            } else {
+                const error = await response.json();
+                this.showToast(error.error || 'Einladung fehlgeschlagen', 'error');
+            }
+        } catch (error) {
+            this.showToast('Fehler beim Einladen', 'error');
+        }
+    }
+    
+    async deleteBoard(boardId) {
+        if (!confirm('Board wirklich löschen? (Kann von Admins wiederhergestellt werden)')) return;
+        
+        try {
+            // Use soft delete endpoint
+            const response = await fetch(`/api/boards/${boardId}/soft`, {
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                this.showToast('Board wurde gelöscht', 'success');
+                this.showWorkspaceView();
+            }
+        } catch (error) {
+            this.showToast('Fehler beim Löschen', 'error');
+        }
+    }
+    
+    async deleteCard(cardId) {
+        if (!confirm('Karte löschen?')) return;
+        
+        try {
+            const response = await fetch(`/api/cards/${cardId}`, {
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                await this.loadBoard(this.currentBoard.id);
+                this.showToast('Karte gelöscht', 'success');
+            }
+        } catch (error) {
+            this.showToast('Fehler beim Löschen', 'error');
+        }
     }
 }
 

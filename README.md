@@ -24,7 +24,27 @@
 - ✅ **Mobile Responsive**: Full PWA with offline capabilities
 - ✅ **Glassmorphism Design**: Modern UI with micro-animations
 
-### 🎨 Advanced Features (NEW - INTEGRATED)
+### 🛡️ Admin & Collaboration Features (NEW)
+
+#### Admin Control Panel
+- **Complete Admin Dashboard** with statistics and monitoring
+- **User Management**: Create, edit, delete users with role assignment
+- **Password Reset**: Admins can reset any user's password
+- **Soft Delete & Recovery**: Deleted items go to trash, admins can restore
+- **Permanent Delete**: Only admins can permanently remove items
+- **Workspace Invitations**: Invite users via email with role selection
+- **Member Management**: Add/remove users from workspaces and boards
+- **Activity Audit Log**: Track all user actions and changes
+- **Access Control**: Admin, Member, and Observer roles
+
+#### Collaboration Features
+- **Workspace Sharing**: Multiple users per workspace
+- **Board Permissions**: Granular access control per board
+- **Soft Delete Protection**: Regular users can't permanently delete
+- **Invite System**: Email-based invitations with roles
+- **Member Overview**: See who's working on what
+
+### 🎨 Advanced Features (INTEGRATED)
 
 #### 1. 🌈 Theme System
 - 5 pre-built themes (Light, Dark, Ocean, Forest, Sunset)
@@ -125,10 +145,21 @@
 - `PUT /api/cards/:id/move` - Move card
 - `DELETE /api/cards/:id` - Delete card
 
-### Admin
+### Admin (Enhanced)
 - `GET /api/admin/users` - List all users
-- `PUT /api/admin/users/:id` - Update user role
+- `PUT /api/admin/users/:id` - Update user role  
+- `PUT /api/admin/users/:id/password` - Reset user password
 - `GET /api/admin/stats` - System statistics
+- `GET /api/admin/trash` - View deleted items
+- `POST /api/admin/restore/:type/:id` - Restore from trash
+- `DELETE /api/admin/permanent/:type/:id` - Permanently delete
+
+### Collaboration
+- `POST /api/workspaces/:id/invite` - Invite user to workspace
+- `DELETE /api/workspaces/:id/members/:userId` - Remove user
+- `GET /api/workspaces/:id/members` - List workspace members
+- `DELETE /api/boards/:id/soft` - Soft delete board
+- `DELETE /api/cards/:id/soft` - Soft delete card
 
 ## 📝 User Guide
 

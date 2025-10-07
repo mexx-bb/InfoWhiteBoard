@@ -559,6 +559,187 @@ app.get('/api/admin/activity', authMiddleware, adminMiddleware, async (c) => {
   return c.json({ logs: logs.results });
 });
 
+// ============= ENHANCED ADMIN ENDPOINTS =============
+
+// Invite user to workspace
+app.post('/api/workspaces/:id/invite', authMiddleware, async (c) => {
+  const workspaceId = c.req.param('id');
+  const { email, role = 'member' } = await c.req.json();
+  const userId = c.get('userId');
+  const db = c.env.DB;
+  
+  // Check if user is admin of workspace
+  const isAdmin = await db.prepare(`
+    SELECT role FROM workspace_members 
+    WHERE workspace_id = ? AND user_id = ? AND role = 'admin'
+  `).bind(workspaceId, userId).first();
+  
+  if (!isAdmin) {
+    return c.json({ error: 'Not authorized' }, 403);
+  }
+  
+  // Find invited user
+  const invitedUser = await db.prepare(
+    'SELECT id, name FROM users WHERE email = ?'
+  ).bind(email).first();
+  
+  if (!invitedUser) {
+    return c.json({ error: 'User not found' }, 404);
+  }
+  
+  // Add user to workspace
+  await db.prepare(`
+    INSERT OR REPLACE INTO workspace_members (workspace_id, user_id, role, joined_at)
+    VALUES (?, ?, ?, datetime('now'))
+  `).bind(workspaceId, invitedUser.id, role).run();
+  
+  return c.json({ 
+    success: true, 
+    user: { id: invitedUser.id, name: invitedUser.name, role } 
+  });
+});
+
+// Remove user from workspace
+app.delete('/api/workspaces/:id/members/:userId', authMiddleware, async (c) => {
+  const workspaceId = c.req.param('id');
+  const targetUserId = c.req.param('userId');
+  const currentUserId = c.get('userId');
+  const db = c.env.DB;
+  
+  // Check if user is admin
+  const isAdmin = await db.prepare(`
+    SELECT role FROM workspace_members 
+    WHERE workspace_id = ? AND user_id = ? AND role = 'admin'
+  `).bind(workspaceId, currentUserId).first();
+  
+  if (!isAdmin) {
+    return c.json({ error: 'Not authorized' }, 403);
+  }
+  
+  await db.prepare(`
+    DELETE FROM workspace_members 
+    WHERE workspace_id = ? AND user_id = ?
+  `).bind(workspaceId, targetUserId).run();
+  
+  return c.json({ success: true });
+});
+
+// Soft delete for boards/cards
+app.delete('/api/boards/:id/soft', authMiddleware, async (c) => {
+  const boardId = c.req.param('id');
+  const userId = c.get('userId');
+  const db = c.env.DB;
+  
+  // Mark as deleted instead of actual delete
+  await db.prepare(`
+    UPDATE boards 
+    SET deleted_at = datetime('now'), deleted_by = ?
+    WHERE id = ? AND deleted_at IS NULL
+  `).bind(userId, boardId).run();
+  
+  return c.json({ success: true });
+});
+
+// Restore soft-deleted items (Admin only)
+app.post('/api/admin/restore/:type/:id', authMiddleware, adminMiddleware, async (c) => {
+  const type = c.req.param('type'); // 'board', 'card', 'list'
+  const itemId = c.req.param('id');
+  const db = c.env.DB;
+  
+  const table = type === 'board' ? 'boards' : type === 'card' ? 'cards' : 'lists';
+  
+  await db.prepare(`
+    UPDATE ${table} 
+    SET deleted_at = NULL, deleted_by = NULL
+    WHERE id = ?
+  `).bind(itemId).run();
+  
+  return c.json({ success: true });
+});
+
+// Get deleted items (Admin only)
+app.get('/api/admin/trash', authMiddleware, adminMiddleware, async (c) => {
+  const db = c.env.DB;
+  
+  const deletedBoards = await db.prepare(`
+    SELECT b.*, u.name as deleted_by_name 
+    FROM boards b
+    LEFT JOIN users u ON b.deleted_by = u.id
+    WHERE b.deleted_at IS NOT NULL
+    ORDER BY b.deleted_at DESC
+  `).all();
+  
+  const deletedCards = await db.prepare(`
+    SELECT c.*, u.name as deleted_by_name, l.name as list_name
+    FROM cards c
+    LEFT JOIN users u ON c.deleted_by = u.id
+    LEFT JOIN lists l ON c.list_id = l.id
+    WHERE c.deleted_at IS NOT NULL
+    ORDER BY c.deleted_at DESC
+  `).all();
+  
+  return c.json({ 
+    boards: deletedBoards.results || [],
+    cards: deletedCards.results || []
+  });
+});
+
+// Permanently delete (Admin only)
+app.delete('/api/admin/permanent/:type/:id', authMiddleware, adminMiddleware, async (c) => {
+  const type = c.req.param('type');
+  const itemId = c.req.param('id');
+  const db = c.env.DB;
+  
+  const table = type === 'board' ? 'boards' : type === 'card' ? 'cards' : 'lists';
+  
+  await db.prepare(`DELETE FROM ${table} WHERE id = ?`).bind(itemId).run();
+  
+  return c.json({ success: true });
+});
+
+// Update user password (Admin only)
+app.put('/api/admin/users/:id/password', authMiddleware, adminMiddleware, async (c) => {
+  const targetUserId = c.req.param('id');
+  const { password } = await c.req.json();
+  const db = c.env.DB;
+  
+  if (!password || password.length < 6) {
+    return c.json({ error: 'Password must be at least 6 characters' }, 400);
+  }
+  
+  const passwordHash = await Password.hash(password);
+  
+  await db.prepare(`
+    UPDATE users SET password_hash = ? WHERE id = ?
+  `).bind(passwordHash, targetUserId).run();
+  
+  return c.json({ success: true });
+});
+
+// Get workspace members with details
+app.get('/api/workspaces/:id/members', authMiddleware, async (c) => {
+  const workspaceId = c.req.param('id');
+  const db = c.env.DB;
+  
+  const members = await db.prepare(`
+    SELECT 
+      u.id, u.email, u.name, u.role as system_role,
+      wm.role as workspace_role, wm.joined_at,
+      COUNT(DISTINCT b.id) as boards_count,
+      COUNT(DISTINCT c.id) as cards_count
+    FROM workspace_members wm
+    JOIN users u ON wm.user_id = u.id
+    LEFT JOIN board_members bm ON bm.user_id = u.id
+    LEFT JOIN boards b ON bm.board_id = b.id AND b.workspace_id = ?
+    LEFT JOIN cards c ON c.created_by = u.id
+    WHERE wm.workspace_id = ?
+    GROUP BY u.id
+    ORDER BY wm.joined_at DESC
+  `).bind(workspaceId, workspaceId).all();
+  
+  return c.json({ members: members.results || [] });
+});
+
 // ============= FRONTEND =============
 
 // Serve the main application
@@ -658,6 +839,11 @@ app.get('/', (c) => {
                         <h1 class="text-lg sm:text-xl font-bold text-gray-900">TaskBoard</h1>
                     </div>
                     <div class="flex items-center space-x-2 sm:space-x-4">
+                        <!-- Admin Panel Button (only for admins) -->
+                        <a id="adminPanelBtn" href="/admin" class="hidden text-yellow-500 hover:text-yellow-400 p-2" title="Admin Panel">
+                            <i class="fas fa-shield-alt text-sm sm:text-base"></i>
+                        </a>
+                        
                         <!-- Theme Switcher -->
                         <button id="themeToggleBtn" class="hidden text-gray-600 hover:text-gray-900 p-2" title="Theme wechseln">
                             <i class="fas fa-palette text-sm sm:text-base"></i>
@@ -874,15 +1060,21 @@ app.get('/admin', authMiddleware, adminMiddleware, (c) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskBoard Admin - Dashboard</title>
+    <title>TaskBoard Admin - Control Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50">
     <div id="adminApp" class="min-h-screen">
-        <!-- Admin content will be loaded here -->
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <i class="fas fa-spinner fa-spin text-4xl text-indigo-600 mb-4"></i>
+                <p class="text-gray-600">Lade Admin Panel...</p>
+            </div>
+        </div>
     </div>
-    <script src="/static/admin.js"></script>
+    <script src="/static/admin-panel.js"></script>
 </body>
 </html>
   `);
