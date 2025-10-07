@@ -710,17 +710,26 @@ app.get('/', (c) => {
                             <input type="password" id="loginPassword" required
                                 class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <button type="submit" class="w-full btn-glass text-white py-2 rounded-lg font-medium">
-                            Anmelden
+                        <button type="submit" class="w-full btn-glass text-white py-3 rounded-lg font-medium flex items-center justify-center space-x-2 hover:scale-105 transition-transform">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Anmelden</span>
                         </button>
                     </form>
                     <p class="mt-4 text-center text-sm text-gray-600">
                         Noch kein Konto? <button id="showRegisterBtn" class="text-indigo-600 hover:underline">Registrieren</button>
                     </p>
                     <div class="mt-4 p-3 bg-blue-50 rounded text-sm">
-                        <p class="font-semibold">Test-Zugänge:</p>
-                        <p>Admin: admin@taskboard.com / admin123</p>
-                        <p>User: max.mueller@company.de / test123</p>
+                        <p class="font-semibold mb-2">🔐 Demo-Zugänge:</p>
+                        <div class="space-y-2">
+                            <button onclick="app.quickLogin('admin@taskboard.com', 'admin123')" class="w-full text-left p-2 hover:bg-blue-100 rounded transition">
+                                <i class="fas fa-user-shield text-purple-600 mr-2"></i>
+                                <span class="font-medium">Admin</span>: admin@taskboard.com
+                            </button>
+                            <button onclick="app.quickLogin('max.mueller@company.de', 'test123')" class="w-full text-left p-2 hover:bg-blue-100 rounded transition">
+                                <i class="fas fa-user text-blue-600 mr-2"></i>
+                                <span class="font-medium">User</span>: max.mueller@company.de
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -745,8 +754,9 @@ app.get('/', (c) => {
                             <input type="password" id="registerPassword" required
                                 class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <button type="submit" class="w-full btn-glass text-white py-2 rounded-lg font-medium">
-                            Registrieren
+                        <button type="submit" class="w-full btn-glass text-white py-3 rounded-lg font-medium flex items-center justify-center space-x-2 hover:scale-105 transition-transform">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Konto erstellen</span>
                         </button>
                     </form>
                     <p class="mt-4 text-center text-sm text-gray-600">
@@ -790,7 +800,13 @@ app.get('/', (c) => {
 
             <!-- Workspace View -->
             <div id="workspaceView" class="hidden max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-                <h2 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Meine Arbeitsbereiche</h2>
+                <div class="flex justify-between items-center mb-4 sm:mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold">Meine Arbeitsbereiche</h2>
+                    <button onclick="app.createWorkspace()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Neuer Arbeitsbereich</span>
+                    </button>
+                </div>
                 <div id="workspacesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                     <!-- Workspaces will be dynamically added here -->
                 </div>

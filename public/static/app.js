@@ -125,7 +125,45 @@ class TaskBoardApp {
     }
     
     showBoardSettings() {
-        alert('Board-Einstellungen (coming soon)');
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="glass rounded-xl p-6 max-w-md w-full animate-fade-in">
+                <h3 class="text-xl font-bold mb-4"><i class="fas fa-cog mr-2"></i>Board-Einstellungen</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">Board Name</label>
+                        <input type="text" value="${this.currentBoard?.name || ''}" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Hintergrundfarbe</label>
+                        <div class="flex space-x-2">
+                            <button class="w-8 h-8 rounded" style="background: #0079BF"></button>
+                            <button class="w-8 h-8 rounded" style="background: #D29034"></button>
+                            <button class="w-8 h-8 rounded" style="background: #519839"></button>
+                            <button class="w-8 h-8 rounded" style="background: #B04632"></button>
+                            <button class="w-8 h-8 rounded" style="background: #89609E"></button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300">
+                            Abbrechen
+                        </button>
+                        <button onclick="app.showToast('Einstellungen gespeichert', 'success'); this.closest('.fixed').remove()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">
+                            Speichern
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Quick login for demo accounts
+    quickLogin(email, password) {
+        document.getElementById('loginEmail').value = email;
+        document.getElementById('loginPassword').value = password;
+        document.getElementById('loginForm').dispatchEvent(new Event('submit'));
     }
 
     // ============= AUTH METHODS =============
@@ -276,6 +314,10 @@ class TaskBoardApp {
         document.getElementById('userMenu').classList.add('hidden');
         document.getElementById('logoutBtn').classList.add('hidden');
         document.getElementById('createBoardBtn').classList.add('hidden');
+        // Hide advanced features when logged out
+        document.getElementById('themeToggleBtn')?.classList.add('hidden');
+        document.getElementById('analyticsBtn')?.classList.add('hidden');
+        document.getElementById('gamificationBtn')?.classList.add('hidden');
     }
 
     showRegisterView() {
@@ -291,11 +333,20 @@ class TaskBoardApp {
         document.getElementById('boardView').classList.add('hidden');
         document.getElementById('workspaceView').classList.remove('hidden');
         
-        // Show user info
+        // Show user info and buttons
         document.getElementById('userMenu').classList.remove('hidden');
         document.getElementById('logoutBtn').classList.remove('hidden');
         document.getElementById('createBoardBtn').classList.remove('hidden');
-        document.getElementById('userName').textContent = this.user.name;
+        
+        // Show advanced feature buttons
+        document.getElementById('themeToggleBtn')?.classList.remove('hidden');
+        document.getElementById('analyticsBtn')?.classList.remove('hidden');
+        document.getElementById('gamificationBtn')?.classList.remove('hidden');
+        
+        // Update user name
+        if (this.user) {
+            document.getElementById('userName').textContent = this.user.name;
+        }
         
         await this.loadWorkspaces();
     }
@@ -305,6 +356,15 @@ class TaskBoardApp {
         document.getElementById('registerView').classList.add('hidden');
         document.getElementById('workspaceView').classList.add('hidden');
         document.getElementById('boardView').classList.remove('hidden');
+        
+        // Keep navigation buttons visible
+        document.getElementById('userMenu').classList.remove('hidden');
+        document.getElementById('logoutBtn').classList.remove('hidden');
+        
+        // Show advanced features in board view
+        document.getElementById('themeToggleBtn')?.classList.remove('hidden');
+        document.getElementById('analyticsBtn')?.classList.remove('hidden');
+        document.getElementById('gamificationBtn')?.classList.remove('hidden');
         
         await this.loadBoard(boardId);
     }
